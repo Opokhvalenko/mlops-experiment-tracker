@@ -1,0 +1,82 @@
+@import "primeflex/primeflex.css";
+@import "primeicons/primeicons.css";
+@import "primevue/resources/themes/lara-light-blue/theme.css";
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  background-color: #f8f9fa;
+  color: #343a40;
+}
+
+#app {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.loading-container p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.p-progress-spinner {
+  width: 4rem;
+  height: 4rem;
+}
+
+.p-progress-spinner-icon {
+  animation: p-progress-spinner-dash 1.5s ease-in-out infinite, p-progress-spinner-color 6s ease-in-out infinite;
+  stroke: #42A5F5;
+  stroke-dasharray: 89, 200;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+}
+
+@keyframes p-progress-spinner-color {
+  0% {
+    stroke: #42A5F5;
+  }
+  25% {
+    stroke: #66BB6A;
+  }
+  50% {
+    stroke: #FFA726;
+  }
+  75% {
+    stroke: #EF5350;
+  }
+  100% {
+    stroke: #42A5F5;
+  }
+}
+
+@keyframes p-progress-spinner-dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -35px;
+  }
+  100% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -124px;
+  }
+}
