@@ -8,8 +8,6 @@
 import PChart from "primevue/chart";
 import { ref } from "vue";
 
-// defineProps() викликається без присвоєння змінній.
-// Vue автоматично робить дані з `data` доступними в `<template>`.
 defineProps({
   data: {
     type: Object,

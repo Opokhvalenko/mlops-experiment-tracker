@@ -21,7 +21,7 @@ export default function useExperimentLogic(toast) {
   const experiments = ref([]);
   const selectedExperiments = ref([]);
   const isLoading = ref(false);
-  const isChartLoading = ref(false); // Нова змінна для лоадера графіка
+  const isChartLoading = ref(false);
   const internalChartData = ref({ labels: [], datasets: [] });
   const selectedMetric = ref("loss");
   const metricOptions = ref([]);
@@ -86,7 +86,7 @@ export default function useExperimentLogic(toast) {
   const updateChartData = () => {
     if (!selectedExperiments.value.length || !allData.value.length) {
       internalChartData.value = { labels: [], datasets: [] };
-      isChartLoading.value = false; // Оновлюємо новий лоадер
+      isChartLoading.value = false;
       return;
     }
 
@@ -123,7 +123,7 @@ export default function useExperimentLogic(toast) {
       labels: sortedSteps,
       datasets: datasets,
     };
-    isChartLoading.value = false; // Оновлюємо новий лоадер
+    isChartLoading.value = false;
   };
 
   watch(
@@ -131,7 +131,7 @@ export default function useExperimentLogic(toast) {
     () => {
       if (selectedExperiments.value.length > 0) {
         clearTimeout(debounceTimer);
-        isChartLoading.value = true; // Використовуємо новий лоадер
+        isChartLoading.value = true;
         debounceTimer = setTimeout(() => {
           updateChartData();
         }, 500);
@@ -148,7 +148,7 @@ export default function useExperimentLogic(toast) {
     experiments,
     selectedExperiments,
     isLoading,
-    isChartLoading, // Експортуємо новий лоадер
+    isChartLoading,
     internalChartData,
     selectedMetric,
     metricOptions,

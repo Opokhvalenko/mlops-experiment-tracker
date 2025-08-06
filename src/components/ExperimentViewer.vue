@@ -88,7 +88,7 @@ const {
   experiments,
   selectedExperiments,
   isLoading,
-  isChartLoading, // Тепер ми використовуємо isChartLoading
+  isChartLoading,
   internalChartData,
   selectedMetric,
   metricOptions,
