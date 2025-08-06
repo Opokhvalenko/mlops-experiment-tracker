@@ -6,34 +6,34 @@
       <PFileUpload
         mode="basic"
         name="demo[]"
-        customUpload
+        custom-upload
         :auto="true"
-        :maxFileSize="30000000"
+        :max-file-size="30000000"
         accept=".csv"
         @uploader="onUpload"
       />
     </div>
 
-    <div v-if="isLoading" class="loading-container">
+    <div v-if="isLoading" class="loading-container-fullscreen">
       <PProgressSpinner />
       <p>Parsing CSV file...</p>
     </div>
 
-    <PAccordion :multiple="true" :activeIndex="[0, 1]">
+    <PAccordion :multiple="true" :active-index="[0, 1]">
       <PAccordionTab header="Experiments">
         <div v-if="experiments.length && !isLoading" class="card">
           <PDataTable
-            :value="experiments"
-            selectionMode="multiple"
             v-model:selection="selectedExperiments"
-            dataKey="id"
+            :value="experiments"
+            selection-mode="multiple"
+            data-key="id"
             :paginator="true"
             :rows="10"
-            :rowsPerPageOptions="[10, 25, 50]"
+            :rows-per-page-options="[10, 25, 50]"
             scrollable
-            scrollHeight="400px"
+            scroll-height="400px"
           >
-            <PColumn selectionMode="multiple" headerStyle="width: 3rem" />
+            <PColumn selection-mode="multiple" header-style="width: 3rem" />
             <PColumn field="id" header="Experiment ID" :sortable="true" />
             <PColumn field="model_type" header="Model Type" :sortable="true" />
             <PColumn
@@ -46,20 +46,22 @@
       </PAccordionTab>
 
       <PAccordionTab header="Experiment Metrics">
-        <div
-          v-if="internalChartData.datasets.length && !isLoading"
-          class="card mt-4"
-        >
-          <div class="flex align-items-center justify-content-between mb-3">
-            <h3>Metrics</h3>
-            <PSelectButton
-              v-model="selectedMetric"
-              :options="metricOptions"
-              optionLabel="label"
-              optionValue="value"
-            />
+        <div v-if="!isLoading" class="card mt-4">
+          <div v-if="isChartLoading" class="loading-container-chart">
+            <PProgressSpinner />
           </div>
-          <ExperimentCharts :data="internalChartData" />
+          <div v-if="internalChartData.datasets.length">
+            <div class="flex align-items-center justify-content-between mb-3">
+              <h3>Metrics</h3>
+              <PSelectButton
+                v-model="selectedMetric"
+                :options="metricOptions"
+                option-label="label"
+                option-value="value"
+              />
+            </div>
+            <ExperimentCharts :data="internalChartData" />
+          </div>
         </div>
       </PAccordionTab>
     </PAccordion>
@@ -67,8 +69,6 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted } from "vue";
-import Papa from "papaparse";
 import PFileUpload from "primevue/fileupload";
 import PDataTable from "primevue/datatable";
 import PColumn from "primevue/column";
@@ -80,159 +80,49 @@ import PAccordionTab from "primevue/accordiontab";
 import PSelectButton from "primevue/selectbutton";
 import { useToast } from "primevue/usetoast";
 
-const allData = ref([]);
-const experiments = ref([]);
-const selectedExperiments = ref([]);
-const isLoading = ref(false);
+import useExperimentLogic from "../composables/useExperimentLogic.js";
+
 const toast = useToast();
-const internalChartData = ref({ labels: [], datasets: [] });
-const selectedMetric = ref("loss");
-const metricOptions = ref([]);
 
-const colorPalette = [
-  "#42A5F5",
-  "#66BB6A",
-  "#FFA726",
-  "#EF5350",
-  "#7E57C2",
-  "#00BCD4",
-  "#FFCA28",
-  "#8D6E63",
-  "#EC407A",
-  "#26A69A",
-];
-
-let debounceTimer = null;
-const experimentColorMap = new Map();
-
-const onUpload = ({ files }) => {
-  const file = files[0];
-  if (file) {
-    isLoading.value = true;
-    Papa.parse(file, {
-      header: true,
-      dynamicTyping: true,
-      worker: true,
-      complete: (results) => {
-        allData.value = results.data.filter((row) =>
-          Object.values(row).some((val) => val !== null && val !== "")
-        );
-        if (allData.value.length) processData(allData.value);
-        isLoading.value = false;
-        toast.add({
-          severity: "success",
-          summary: "Parsed",
-          detail: "CSV parsed successfully.",
-          life: 3000,
-        });
-      },
-      error: () => {
-        isLoading.value = false;
-        toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Error parsing CSV file.",
-          life: 3000,
-        });
-      },
-    });
-  }
-};
-
-const processData = (data) => {
-  const uniqueExperimentIds = [
-    ...new Set(data.map((item) => item.experiment_id)),
-  ];
-  experiments.value = uniqueExperimentIds.map((id) => {
-    const first = data.find((item) => item.experiment_id === id);
-    return {
-      id,
-      model_type: first.model_type,
-      learning_rate: first.learning_rate,
-    };
-  });
-  const uniqueMetrics = [...new Set(data.map((item) => item.metric_name))];
-  metricOptions.value = uniqueMetrics.map((m) => ({ label: m, value: m }));
-  selectedMetric.value = uniqueMetrics[0] || "loss";
-
-  uniqueExperimentIds.forEach((id, index) => {
-    if (!experimentColorMap.has(id)) {
-      experimentColorMap.set(id, colorPalette[index % colorPalette.length]);
-    }
-  });
-};
-
-const updateChartData = () => {
-  if (!selectedExperiments.value.length || !allData.value.length) {
-    internalChartData.value = { labels: [], datasets: [] };
-    isLoading.value = false;
-    return;
-  }
-
-  const datasets = [];
-  const steps = new Set();
-  const sortedExperiments = [...selectedExperiments.value].sort((a, b) => {
-    const idA = parseInt(a.id.split("_")[1]);
-    const idB = parseInt(b.id.split("_")[1]);
-    return idA - idB;
-  });
-
-  sortedExperiments.forEach((exp) => {
-    const metricsForExp = allData.value.filter(
-      (item) =>
-        item.experiment_id === exp.id &&
-        item.metric_name === selectedMetric.value
-    );
-
-    const filtered = metricsForExp.sort((a, b) => a.step - b.step);
-
-    filtered.forEach((item) => steps.add(item.step));
-
-    datasets.push({
-      label: `${exp.id} - ${selectedMetric.value}`,
-      data: filtered.map((item) => item.value),
-      borderColor: experimentColorMap.get(exp.id),
-      fill: false,
-      tension: 0.3,
-      borderWidth: 2,
-    });
-  });
-
-  const sortedSteps = [...steps].sort((a, b) => a - b);
-
-  internalChartData.value = {
-    labels: sortedSteps,
-    datasets: datasets,
-  };
-  isLoading.value = false;
-};
-
-watch(
-  [selectedExperiments, selectedMetric],
-  () => {
-    clearTimeout(debounceTimer);
-    isLoading.value = true;
-    debounceTimer = setTimeout(() => {
-      updateChartData();
-    }, 500);
-  },
-  { deep: true }
-);
-
-onUnmounted(() => {
-  clearTimeout(debounceTimer);
-});
+const {
+  experiments,
+  selectedExperiments,
+  isLoading,
+  isChartLoading, // Тепер ми використовуємо isChartLoading
+  internalChartData,
+  selectedMetric,
+  metricOptions,
+  onUpload,
+} = useExperimentLogic(toast);
 </script>
 
 <style scoped>
-.loading-container {
+.loading-container-chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 10;
+}
+.loading-container-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 9999;
 }
-.loading-container p {
+.loading-container-fullscreen p {
   margin-top: 1rem;
   font-size: 1.2rem;
   color: #666;

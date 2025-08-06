@@ -4,43 +4,37 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import PChart from "primevue/chart";
+import { ref } from "vue";
 
-export default {
-  name: "ExperimentCharts",
-  components: {
-    PChart,
+// defineProps() викликається без присвоєння змінній.
+// Vue автоматично робить дані з `data` доступними в `<template>`.
+defineProps({
+  data: {
+    type: Object,
+    required: true,
   },
-  props: {
-    data: {
-      type: Object,
-      required: true,
+});
+
+const chartOptions = ref({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      title: {
+        display: true,
+        text: "Training Step",
+      },
+    },
+    y: {
+      title: {
+        display: true,
+        text: "Metric Value",
+      },
     },
   },
-  data() {
-    return {
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Training Step",
-            },
-          },
-          y: {
-            title: {
-              display: true,
-              text: "Metric Value",
-            },
-          },
-        },
-      },
-    };
-  },
-};
+});
 </script>
 
 <style scoped>
